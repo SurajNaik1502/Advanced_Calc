@@ -1,4 +1,5 @@
 import tkinter as tk
+from tkinter import ttk
 from math import sin, cos, tan, radians, degrees, log, log10, sqrt, pow
 
 # Global variables for memory and angle mode
@@ -59,61 +60,22 @@ def click(button_text):
         entry.insert(tk.END, str(memory))
     elif button_text == "MC":
         memory = 0
-    elif button_text == "sin":
+    elif button_text in ["sin", "cos", "tan"]:
         try:
             value = float(entry.get())
             angle = radians(value) if angle_mode == "Degrees" else value
-            result = sin(angle)
+            result = sin(angle) if button_text == "sin" else cos(angle) if button_text == "cos" else tan(angle)
             entry.delete(0, tk.END)
             entry.insert(tk.END, str(result))
         except Exception:
             entry.delete(0, tk.END)
             entry.insert(tk.END, "Error")
-    elif button_text == "cos":
-        try:
-            value = float(entry.get())
-            angle = radians(value) if angle_mode == "Degrees" else value
-            result = cos(angle)
-            entry.delete(0, tk.END)
-            entry.insert(tk.END, str(result))
-        except Exception:
-            entry.delete(0, tk.END)
-            entry.insert(tk.END, "Error")
-    elif button_text == "tan":
-        try:
-            value = float(entry.get())
-            angle = radians(value) if angle_mode == "Degrees" else value
-            if cos(angle) == 0:
-                raise ValueError("Undefined")
-            result = tan(angle)
-            entry.delete(0, tk.END)
-            entry.insert(tk.END, str(result))
-        except ValueError:
-            entry.delete(0, tk.END)
-            entry.insert(tk.END, "Undefined")
-        except Exception:
-            entry.delete(0, tk.END)
-            entry.insert(tk.END, "Error")
-    elif button_text == "log":
+    elif button_text in ["log", "ln"]:
         try:
             value = float(entry.get())
             if value <= 0:
                 raise ValueError("Invalid input")
-            result = log10(value)
-            entry.delete(0, tk.END)
-            entry.insert(tk.END, str(result))
-        except ValueError:
-            entry.delete(0, tk.END)
-            entry.insert(tk.END, "Invalid Input")
-        except Exception:
-            entry.delete(0, tk.END)
-            entry.insert(tk.END, "Error")
-    elif button_text == "ln":
-        try:
-            value = float(entry.get())
-            if value <= 0:
-                raise ValueError("Invalid input")
-            result = log(value)
+            result = log10(value) if button_text == "log" else log(value)
             entry.delete(0, tk.END)
             entry.insert(tk.END, str(result))
         except ValueError:
@@ -128,16 +90,28 @@ def click(button_text):
     else:
         entry.insert(tk.END, button_text)
 
+# Add keyboard support
+def key_press(event):
+    key = event.keysym
+    if key in "0123456789+-*/.=C":
+        click(key)
+    elif key == "Return":
+        click("=")
+    elif key == "BackSpace":
+        current_text = entry.get()
+        entry.delete(0, tk.END)
+        entry.insert(0, current_text[:-1])
+
 # GUI Setup
 window = tk.Tk()
 window.title("Advanced Calculator")
 window.configure(bg="#282c34")
 
 # Entry widget
-entry = tk.Entry(window, font=("Arial", 20), bd=5, insertwidth=4, width=14, justify="right", bg="#1c1f26", fg="#61dafb")
-entry.grid(row=0, column=0, columnspan=5, padx=10, pady=10)
+entry = ttk.Entry(window, font=("Arial", 20), justify="right")
+entry.grid(row=0, column=0, columnspan=5, sticky="nsew", padx=10, pady=10)
 
-# Buttons
+# Buttons configuration
 buttons = [
     ("C", 1, 0), ("M+", 1, 1), ("MR", 1, 2), ("MC", 1, 3), ("/", 1, 4),
     ("7", 2, 0), ("8", 2, 1), ("9", 2, 2), ("*", 2, 3), ("√", 2, 4),
@@ -149,11 +123,11 @@ buttons = [
 
 # Add buttons to the grid
 for (text, row, col) in buttons:
-    button = tk.Button(window, text=text, padx=20, pady=20, font=("Arial", 18), bg="#3c4047", fg="#000", command=lambda t=text: click(t))
+    button = ttk.Button(window, text=text, command=lambda t=text: click(t))
     button.grid(row=row, column=col, sticky="nsew", padx=5, pady=5)
 
 # Mode button for RAD/DEG toggle
-mode_button = tk.Button(window, text=f"Mode: {angle_mode}", padx=20, pady=20, font=("Arial", 18), bg="#5a5a5a", fg="#000", command=lambda: click("RAD/DEG"))
+mode_button = ttk.Button(window, text=f"Mode: {angle_mode}", command=lambda: click("RAD/DEG"))
 mode_button.grid(row=6, column=0, columnspan=2, sticky="nsew", padx=5, pady=5)
 
 # Configure grid expansion
@@ -161,6 +135,9 @@ for i in range(7):
     window.grid_rowconfigure(i, weight=1)
 for j in range(5):
     window.grid_columnconfigure(j, weight=1)
+
+# Bind keyboard events
+window.bind("<Key>", key_press)
 
 # Run the main event loop
 window.mainloop()
